@@ -345,6 +345,8 @@ export const desktopSvg = (m: Measure | null, t: TurnTokens | null, at: number) 
   return {
     svg: wrap(width, stat.join('')),
     motion: motion.length ? wrap(width, motion.join('')) : undefined,
+    // Both layers in one framed SVG: what the band draws until the split layers can be laid out
+    full: wrap(width, stat.join('') + motion.join('')),
     width,
     height: D.h,
   }
@@ -485,17 +487,10 @@ export const register: Register = on => {
     // Desktop and mobile animate inside the SVG, so they never read the frame counter
     if (e.surface === 'desktop' || e.surface === 'mobile') {
       const { Box, Svg } = $.ui.resolve(e)
-      const { svg, motion, width, height } = desktopSvg(m, t, at)
+      const { full, width, height } = desktopSvg(m, t, at)
       return (
         <Box flexDirection="row" justifyContent="center" flexGrow={1} paddingX={1}>
-          <Box position="relative" width={width} height={height}>
-            <Svg source={svg} alt={describe(m, t)} width={width} height={height} />
-            {motion && (
-              <Box position="absolute" top={0} left={0}>
-                <Svg source={motion} alt="usage bars" width={width} height={height} isInteractive />
-              </Box>
-            )}
-          </Box>
+          <Svg source={full} alt={describe(m, t)} width={width} height={height} isInteractive />
         </Box>
       )
     }

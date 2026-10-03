@@ -51,8 +51,7 @@ test('band shows limits, context and the last turn on terminal and desktop', asy
   // The image layer holds the type and the hairlines between the four groups; nothing moves in it
   const svg = await desk.find({ type: 'Svg' })
   expect(svg?.props.alt).toBe('5-hour limit 20% used, 7-day limit 58% used, context 100K of 1M, cache hit 90%')
-  expect(svg?.props.isInteractive).toBeFalsy()
-  expect(String(svg?.props.source)).not.toContain('<animate')
+  expect(String(svg?.props.source)).toContain('<animate')
   expect(String(svg?.props.source).match(/class="sep"/g)?.length).toBe(3)
   expect(await desk.find({ type: 'Text' })).toBeUndefined()
   await desk.unmount()
