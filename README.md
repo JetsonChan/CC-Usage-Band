@@ -11,7 +11,7 @@
 
 English · [简体中文](./README.zh-CN.md)
 
-<img src="docs/images/hero.png" alt="usage-band in the Claude Code desktop app, light and dark mode" width="760">
+<img src="docs/images/hero.png" alt="usage-band in the Claude Code desktop app (top) and in a terminal (bottom)" width="760">
 
 </div>
 
