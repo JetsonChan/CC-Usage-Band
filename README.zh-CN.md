@@ -11,7 +11,7 @@
 
 [English](./README.md) · 简体中文
 
-<img src="docs/images/hero.png" alt="usage-band 在 Claude Code 桌面端（上）和终端（下）的效果" width="760">
+<img src="docs/images/header.png" alt="usage-band 在 Claude Code 桌面端（上）和终端（下）的效果" width="760">
 
 </div>
 
