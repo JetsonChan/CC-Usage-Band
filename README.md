@@ -11,7 +11,7 @@
 
 English · [简体中文](./README.zh-CN.md)
 
-<img src="docs/images/header.png" alt="usage-band in the Claude Code desktop app (top) and in a terminal (bottom)" width="760">
+<img src="docs/images/banner.png" alt="usage-band in the Claude Code desktop app (top) and in a terminal (bottom)" width="760">
 
 </div>
 
@@ -152,9 +152,9 @@ Issues and pull requests are welcome.
 
 ## Screenshots
 
-**Desktop app, light mode.** The 5h limit is past 80%, so it has turned red.
+**Desktop app, light mode**
 
-<img src="docs/images/desktop-light.png" alt="usage-band in the desktop app, light mode" width="760">
+<img src="docs/images/desktop-light-app.png" alt="usage-band in the desktop app, light mode" width="760">
 
 **Desktop app, dark mode**
 

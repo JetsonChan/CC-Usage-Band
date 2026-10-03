@@ -11,7 +11,7 @@
 
 [English](./README.md) · 简体中文
 
-<img src="docs/images/header.png" alt="usage-band 在 Claude Code 桌面端（上）和终端（下）的效果" width="760">
+<img src="docs/images/banner.png" alt="usage-band 在 Claude Code 桌面端（上）和终端（下）的效果" width="760">
 
 </div>
 
@@ -154,9 +154,9 @@ claude plugin test .
 
 ## 截图
 
-**桌面端，浅色模式**：5h 额度已超过 80%，所以变成了红色。
+**桌面端，浅色模式**
 
-<img src="docs/images/desktop-light.png" alt="usage-band 在桌面端的浅色模式效果" width="760">
+<img src="docs/images/desktop-light-app.png" alt="usage-band 在桌面端的浅色模式效果" width="760">
 
 **桌面端，深色模式**
 
