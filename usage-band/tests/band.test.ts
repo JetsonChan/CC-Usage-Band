@@ -1,6 +1,7 @@
 import { expect, mock, test } from 'claude-code/testing'
 
 import { bar, desktopSvg, detectStyle, fmtLeft, fmtTokens, hitRate, layout, to256, width } from '../hooks/register'
+import type { Measure } from '../types'
 
 const BAND = {
   component: 'AbovePrompt',
@@ -47,10 +48,11 @@ test('band shows limits, context and the last turn on terminal and desktop', asy
   })
 
   const desk = await $.ui.mount({ plugin: 'usage-band', surface: 'desktop', ...BAND })
-  // One SVG for the band (shared animation clock), hairlines between the four groups
+  // The image layer holds the type and the hairlines between the four groups; nothing moves in it
   const svg = await desk.find({ type: 'Svg' })
   expect(svg?.props.alt).toBe('5-hour limit 20% used, 7-day limit 58% used, context 100K of 1M, cache hit 90%')
-  expect(String(svg?.props.source)).toContain('<animate')
+  expect(svg?.props.isInteractive).toBeFalsy()
+  expect(String(svg?.props.source)).not.toContain('<animate')
   expect(String(svg?.props.source).match(/class="sep"/g)?.length).toBe(3)
   expect(await desk.find({ type: 'Text' })).toBeUndefined()
   await desk.unmount()
@@ -139,7 +141,7 @@ test('bars of different fill keep their highlights in step', async () => {
 
 test('desktop context is a 2×10 dot matrix, top row first', async () => {
   const svgFor = (pct: number) =>
-    desktopSvg({ context: { tokens: pct * 10_000, window: 1_000_000, percent: pct }, rateLimits: [] }, null, 0).svg
+    desktopSvg({ context: { tokens: pct * 10_000, window: 1_000_000, percent: pct }, rateLimits: [] }, null, 0).motion ?? ''
   const lit = (svg: string) => (svg.match(/<clipPath id="c-ctx">(.*?)<\/clipPath>/)?.[1]?.match(/<circle/g) ?? []).length
   const all = (svg: string) => (svg.match(/<circle [^>]*r="1.6"/g) ?? []).length
   expect(all(svgFor(35))).toBe(20 + 7)
@@ -172,4 +174,21 @@ test('the desktop SVG declares both color schemes so a dark app gets no white ba
   const { svg } = desktopSvg({ context: { tokens: 1, window: 10, percent: 10 }, rateLimits: [] }, null, 0)
   expect(svg).toContain('color-scheme:light dark')
   expect(svg).toContain('prefers-color-scheme:dark')
+})
+
+test('the framed layer only changes when a bar or the dots do, not when the countdown ticks', () => {
+  const m = (pct: number): Measure => ({
+    context: { tokens: 100_000, window: 1_000_000, percent: 10 },
+    rateLimits: [
+      { kind: 'five_hour', percentUsed: pct, resetsAt: new Date(3 * 3_600_000).toISOString() },
+      { kind: 'seven_day', percentUsed: 58, resetsAt: new Date(5 * 86_400_000).toISOString() },
+    ],
+  })
+  // 2h53m → 2h46m: the figures change, the layout does not
+  const a = desktopSvg(m(20), null, 7 * 60_000)
+  const b = desktopSvg(m(20), null, 14 * 60_000)
+  expect(b.svg).not.toBe(a.svg)
+  expect(b.motion).toBe(a.motion)
+  expect(a.motion).toContain('<animate')
+  expect(desktopSvg(m(21), null, 7 * 60_000).motion).not.toBe(a.motion)
 })

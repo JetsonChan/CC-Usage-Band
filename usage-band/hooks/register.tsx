@@ -150,8 +150,10 @@ const fit = (m: Measure | null, t: TurnTokens | null, at: number, cols: number, 
   layout(m, t, at, 0, frame, look)
 
 
-// ---- Desktop: the whole band is one SVG. Limits are a figure and a short bar with a SMIL shine;
-// context and cache hit are set as type, the number carrying a thin underline gauge.
+// ---- Desktop: the band is two SVGs on the same grid, one laid over the other.
+// An animated SVG has to run in a frame, and a frame reloads (the band blinks) whenever its source
+// changes. So the figures, which change every minute, are a plain image, and only the moving parts
+// (bars and dots with their shine) are in the frame, whose source changes only when they do.
 
 const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -176,7 +178,9 @@ const ink = (hue: string, x: number, y: number, v: string, size: number) =>
 const mute = (x: number, y: number, v: string, size: number) =>
   `<text x="${x}" y="${y}" font-size="${size}" ${pinW(v, size)} class="mute">${esc(v)}</text>`
 
-type Group = { width: number; draw: (x: number) => string }
+// stat: the image layer (type, icons, rules); motion: the framed layer (bars, dots, shine)
+type Layers = { stat: string; motion: string }
+type Group = { width: number; draw: (x: number) => Layers }
 
 // 5h 60% ▬▬▬▬── 1h49m: the figure first, so the state reads before the bar
 // 5h ▬▬▬▬▬▬──── 69% │ 1h31m: label, bar, figure, then when it resets
@@ -196,8 +200,7 @@ const limitGroup = (id: string, label: string, l: Limit, hue: string, at: number
       const y = (D.h - D.barH) / 2
       const r = D.barH / 2
       const px = bx + D.barW + D.inner
-      const out = [
-        ink(color, x, 19.5, label, D.base),
+      const motion = [
         `<defs><clipPath id="c-${id}"><rect x="${bx}" y="${y}" width="${fillW}" height="${D.barH}" rx="${r}"/></clipPath></defs>`,
         `<rect x="${bx}" y="${y}" width="${D.barW}" height="${D.barH}" rx="${r}" class="track" style="--h:${color}"/>`,
         `<rect x="${bx}" y="${y}" width="${fillW}" height="${D.barH}" rx="${r}" fill="${lighten(color, -0.12)}"/>`,
@@ -205,13 +208,13 @@ const limitGroup = (id: string, label: string, l: Limit, hue: string, at: number
         // so both bars' shines sit at the same spot at every moment
         `<g clip-path="url(#c-${id})"><rect y="${y}" width="18" height="${D.barH}" fill="url(#shine)">` +
           `<animate attributeName="x" values="${bx - 18};${bx + D.barW};${bx + D.barW}" keyTimes="0;0.62;1" dur="2.6s" repeatCount="indefinite"/></rect></g>`,
-        ink(color, px, 19.5, pctText, D.base),
       ]
+      const stat = [ink(color, x, 19.5, label, D.base), ink(color, px, 19.5, pctText, D.base)]
       if (left) {
         const rx = px + pctW + D.inner
-        out.push(`<rect x="${rx}" y="${CAP.top}" width="1" height="${CAP.h}" class="rule"/>`, mute(rx + 1 + D.inner, 19.5, left, D.sm))
+        stat.push(`<rect x="${rx}" y="${CAP.top}" width="1" height="${CAP.h}" class="rule"/>`, mute(rx + 1 + D.inner, 19.5, left, D.sm))
       }
-      return out.join('')
+      return { stat: stat.join(''), motion: motion.join('') }
     },
   }
 }
@@ -239,11 +242,13 @@ const typeGroup = (icon: (c: string) => string, hue: string, num: string, suffix
     width: lw + nw + sw,
     draw: x => {
       const nx = x + lw
-      return (
-        `<g transform="translate(${x} ${CAP.top})">${icon(lighten(hue, -0.15))}</g>` +
-        ink(hue, nx, 19.5, num, D.md) +
-        (suffix ? mute(nx + nw + 1, 19.5, suffix, D.sm) : '')
-      )
+      return {
+        stat:
+          `<g transform="translate(${x} ${CAP.top})">${icon(lighten(hue, -0.15))}</g>` +
+          ink(hue, nx, 19.5, num, D.md) +
+          (suffix ? mute(nx + nw + 1, 19.5, suffix, D.sm) : ''),
+        motion: '',
+      }
     },
   }
 }
@@ -267,21 +272,23 @@ const ctxGroup = (hue: string, tokens: number, window: number, pct: number): Gro
       const on = Array.from({ length: lit }, (_, i) => dot(i)).join('')
       const off = Array.from({ length: DOTS.cols * 2 - lit }, (_, i) => dot(lit + i)).join('')
       const nx = mx + matrixW + D.inner
-      return (
-        `<g transform="translate(${x} ${CAP.top})">${layersIcon(lighten(hue, -0.15))}</g>` +
-        `<defs><clipPath id="c-ctx">${on}</clipPath></defs>` +
-        `<g class="track" style="--h:${hue}">${off}</g>` +
-        `<g fill="${lighten(hue, -0.12)}">${on}</g>` +
-        `<g clip-path="url(#c-ctx)"><rect y="8" width="18" height="14" fill="url(#shine)">` +
-        `<animate attributeName="x" values="${mx - 18};${mx + matrixW};${mx + matrixW}" keyTimes="0;0.62;1" dur="2.6s" repeatCount="indefinite"/></rect></g>` +
-        ink(hue, nx, 19.5, num, D.md) +
-        mute(nx + textW(num, D.md) + 1, 19.5, suffix, D.sm)
-      )
+      return {
+        stat:
+          `<g transform="translate(${x} ${CAP.top})">${layersIcon(lighten(hue, -0.15))}</g>` +
+          ink(hue, nx, 19.5, num, D.md) +
+          mute(nx + textW(num, D.md) + 1, 19.5, suffix, D.sm),
+        motion:
+          `<defs><clipPath id="c-ctx">${on}</clipPath></defs>` +
+          `<g class="track" style="--h:${hue}">${off}</g>` +
+          `<g fill="${lighten(hue, -0.12)}">${on}</g>` +
+          `<g clip-path="url(#c-ctx)"><rect y="8" width="18" height="14" fill="url(#shine)">` +
+          `<animate attributeName="x" values="${mx - 18};${mx + matrixW};${mx + matrixW}" keyTimes="0;0.62;1" dur="2.6s" repeatCount="indefinite"/></rect></g>`,
+      }
     },
   }
 }
 
-// The interactive SVG renders in its own frame; a frame whose color scheme differs from the app's
+// Both layers carry the same head. The framed one needs it most: a frame whose color scheme differs from the app's
 // gets an opaque canvas behind it (white in a dark app). Declaring both schemes lets it follow the
 // app and stay transparent.
 const SVG_HEAD =
@@ -298,7 +305,7 @@ const SVG_HEAD =
 const wrap = (width: number, body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${D.h}" viewBox="0 0 ${width} ${D.h}" style="color-scheme:light dark;background:transparent">${SVG_HEAD}${body}</svg>`
 
-export type Part = { svg: string; width: number; alt: string }
+export type Part = Layers & { width: number; alt: string }
 
 export const desktopParts = (m: Measure | null, t: TurnTokens | null, at: number): Part[] => {
   const groups: { g: Group; alt: string }[] = []
@@ -317,22 +324,30 @@ export const desktopParts = (m: Measure | null, t: TurnTokens | null, at: number
   if (hit !== null) groups.push({ g: typeGroup(targetIcon, hit < 50 ? RED : HUE.cache, `${hit}%`, ''), alt: `cache hit ${hit}%` })
   return groups.map(({ g, alt }) => {
     const width = Math.ceil(g.width + 2)
-    return { svg: g.draw(1), width, alt }
+    return { ...g.draw(1), width, alt }
   })
 }
 
-// One SVG for the whole band, so every shine runs on the same clock. Groups sit D.gap apart
-// with a hairline centred in each gap; the one inside a limit group is shorter and fainter.
+// Groups sit D.gap apart with a hairline centred in each gap; the one inside a limit group is
+// shorter and fainter. All the moving parts share one frame, so every shine runs on one clock.
+// `svg` is the image layer and `motion` the framed one, absent when nothing moves.
 export const desktopSvg = (m: Measure | null, t: TurnTokens | null, at: number) => {
   let x = 0
-  const body: string[] = []
+  const stat: string[] = []
+  const motion: string[] = []
   desktopParts(m, t, at).forEach((p, i) => {
-    if (i > 0) body.push(`<rect x="${Math.round(x - D.gap / 2)}" y="7" width="1" height="16" class="sep"/>`)
-    body.push(`<g transform="translate(${x} 0)">${p.svg}</g>`)
+    if (i > 0) stat.push(`<rect x="${Math.round(x - D.gap / 2)}" y="7" width="1" height="16" class="sep"/>`)
+    stat.push(`<g transform="translate(${x} 0)">${p.stat}</g>`)
+    if (p.motion) motion.push(`<g transform="translate(${x} 0)">${p.motion}</g>`)
     x += p.width + D.gap
   })
   const width = Math.max(1, Math.ceil(x - D.gap))
-  return { svg: wrap(width, body.join('')), width, height: D.h }
+  return {
+    svg: wrap(width, stat.join('')),
+    motion: motion.length ? wrap(width, motion.join('')) : undefined,
+    width,
+    height: D.h,
+  }
 }
 
 export const describe = (m: Measure | null, t: TurnTokens | null) => {
@@ -373,6 +388,10 @@ const PROFILES: { name: string; look: Look }[] = [
 // plugin option so a fresh install has nothing to configure.
 const ICONS_ENV = 'USAGE_BAND_ICONS'
 
+export const WELCOME =
+  'usage-band is on: your 5h and 7d limits, context window and cache hit rate now show above the prompt. ' +
+  'The limits fill in after Claude’s first reply.'
+
 export const register: Register = on => {
   let setting = 'auto'
   // The terminal animates by redrawing; started by its first draw, so a desktop-only session
@@ -388,6 +407,11 @@ export const register: Register = on => {
       name: PREVIEW,
       description: 'Preview how the usage band looks in different terminals',
     })
+    // One welcome after install, so a new user knows what appeared above the prompt
+    if ((await $.store.get('welcomed')) !== true) {
+      await $.store.set('welcomed', true)
+      $.ui.toast(WELCOME, { timeoutMs: 12_000 })
+    }
     const usage = await $.session.usage()
     await update($, measure, () => ({ context: usage.context, rateLimits: usage.rateLimits }))
     await tick($)
@@ -461,10 +485,17 @@ export const register: Register = on => {
     // Desktop and mobile animate inside the SVG, so they never read the frame counter
     if (e.surface === 'desktop' || e.surface === 'mobile') {
       const { Box, Svg } = $.ui.resolve(e)
-      const { svg, width, height } = desktopSvg(m, t, at)
+      const { svg, motion, width, height } = desktopSvg(m, t, at)
       return (
         <Box flexDirection="row" justifyContent="center" flexGrow={1} paddingX={1}>
-          <Svg source={svg} alt={describe(m, t)} width={width} height={height} isInteractive />
+          <Box position="relative" width={width} height={height}>
+            <Svg source={svg} alt={describe(m, t)} width={width} height={height} />
+            {motion && (
+              <Box position="absolute" top={0} left={0}>
+                <Svg source={motion} alt="usage bars" width={width} height={height} isInteractive />
+              </Box>
+            )}
+          </Box>
         </Box>
       )
     }
