@@ -1,6 +1,6 @@
 {
   "name": "usage-band",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A band above the prompt showing your 5-hour and 7-day limits, context window and prompt-cache hit rate, styled for the terminal and the desktop app",
   "author": {
     "name": "Jetson Chan"
@@ -15,19 +15,5 @@
     "status",
     "mod"
   ],
-  "types": "./types/index.d.ts",
-  "userConfig": {
-    "icons": {
-      "type": "string",
-      "title": "Icon style",
-      "description": "auto picks Nerd Font icons in terminals that ship them (Ghostty) and plain Unicode elsewhere",
-      "default": "auto",
-      "options": [
-        "auto",
-        "nerd",
-        "unicode",
-        "ascii"
-      ]
-    }
-  }
+  "types": "./types/index.d.ts"
 }

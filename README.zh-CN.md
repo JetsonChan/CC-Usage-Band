@@ -52,17 +52,21 @@
 
 - Claude Code **2.1.287 或更新版本**（模组功能是从这个版本开始提供的），终端和桌面端的 Code 页都可以用。
 - 5h 和 7d 额度只有订阅账号才有数据。没有订阅时，这一行只显示上下文和缓存命中率。
+- **推荐搭配 [Ghostty](https://ghostty.org) 终端使用。** Ghostty 自带这一行用到的图标字体，不用做任何设置就能看到完整效果。其他终端也能用，图标会简单一些。
 
 ## 安装
 
-在 Claude Code 里依次运行：
+在 Claude Code 里输入这两条命令：
 
 ```
 /plugin marketplace add JetsonChan/CC-Usage-Band
 /plugin install usage-band@cc-usage-band
 ```
 
-新开一个会话，输入框上方就会出现这一行。额度数据要等会话里第一次回复返回后才会显示。
+然后**新开一个会话**，输入框上方就会出现这一行。就这么简单，不需要任何配置。
+
+- 想在当前会话里马上看到？输入 `/reload-plugins`。
+- 5h 和 7d 额度要等会话里 Claude 第一次回复后才会显示。
 
 如果只想在一个会话里临时试用，可以从本地克隆后加载：
 
@@ -85,11 +89,13 @@ claude --plugin-dir CC-Usage-Band/usage-band
 
 ## 设置
 
-| 选项 | 可选值 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `icons` | `auto` · `nerd` · `unicode` · `ascii` | `auto` | 终端里使用的图标。`auto` 在自带 Nerd Font 图标的 Ghostty 里用 Nerd Font 图标，在其他终端里用普通 Unicode 字符。如果你的终端字体是 Nerd Font，可以选 `nerd`；很老旧的终端可以选 `ascii`。桌面端的图标是自己画的，不受这个选项影响。 |
+不需要任何设置。终端里的图标会自动选择：在 Ghostty 里用 Nerd Font 图标，在其他终端里用普通 Unicode 字符。桌面端的图标是自己画的。
 
-可以在 `/plugin` 里配置 `usage-band`，或者在终端会话里用 `/config` 修改。
+如果终端里的图标显示成方框，或者你在别的终端里也装了 Nerd Font，可以在 shell 配置文件（比如 `~/.zshrc`）里加一行，然后新开一个会话：
+
+```bash
+export USAGE_BAND_ICONS=unicode   # auto（默认）· nerd · unicode · ascii
+```
 
 ## 数据说明
 
@@ -108,13 +114,13 @@ claude --plugin-dir CC-Usage-Band/usage-band
 | macOS 自带终端 | Unicode | 256 色，自动换算 |
 | 其他终端 | Unicode | 按终端支持的颜色显示 |
 
-如果图标显示成方框，把 `icons` 改成 `unicode` 就行。可以运行 `/usage-band-preview`，在你自己的终端里对比所有样式。
+如果图标显示成方框，设置 `USAGE_BAND_ICONS=unicode` 就行（见[设置](#设置)）。可以运行 `/usage-band-preview`，在你自己的终端里对比所有样式。
 
 ## 隐私与权限
 
 模组运行时的权限和 Claude Code 本身一样，没有沙箱隔离。所以这里列出这个模组会接触的全部内容：
 
-- **读取**：会话的用量数据（`session.measure`、`turn.complete`、`$.session.usage`），以及环境变量 `TERM_PROGRAM`
+- **读取**：会话的用量数据（`session.measure`、`turn.complete`、`$.session.usage`），以及环境变量 `TERM_PROGRAM` 和 `USAGE_BAND_ICONS`
 - **注册**：一个命令 `/usage-band-preview`
 - **绘制**：输入框上方的这一行
 
@@ -126,7 +132,7 @@ claude --plugin-dir CC-Usage-Band/usage-band
 .
 ├── .claude-plugin/marketplace.json   # cc-usage-band 插件市场
 └── usage-band/
-    ├── .claude-plugin/plugin.json    # 插件信息和 icons 选项
+    ├── .claude-plugin/plugin.json    # 插件信息
     ├── hooks/register.tsx            # 模组代码
     ├── types/index.d.ts              # 状态类型定义
     └── tests/band.test.ts

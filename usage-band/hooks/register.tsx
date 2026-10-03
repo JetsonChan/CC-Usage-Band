@@ -369,14 +369,19 @@ const PROFILES: { name: string; look: Look }[] = [
   { name: 'ascii fallback', look: { style: 'ascii', colors: '256' } },
 ]
 
-export const register: Register = (on, options) => {
-  const setting = String(options.icons ?? 'auto')
+// Icon set override, read from USAGE_BAND_ICONS. It is an environment variable rather than a
+// plugin option so a fresh install has nothing to configure.
+const ICONS_ENV = 'USAGE_BAND_ICONS'
+
+export const register: Register = on => {
+  let setting = 'auto'
   // The terminal animates by redrawing; started by its first draw, so a desktop-only session
   // never runs it. A reload drops the timer and this flag together.
   let isAnimating = false
 
   on('session.start', async ($, e, next) => {
     const result = await next(e)
+    setting = ((await $.env.get('USAGE_BAND_ICONS')) ?? 'auto').trim().toLowerCase() || 'auto'
     const term = await $.env.get('TERM_PROGRAM')
     await update($, style, () => detectStyle(setting, term))
     await $.command.register({
@@ -417,7 +422,7 @@ export const register: Register = (on, options) => {
   })
 
   on('command.run', { command: PREVIEW }, async () => ({
-    text: `usage-band style preview (icons setting: ${setting})`,
+    text: `usage-band style preview (${ICONS_ENV}: ${setting})`,
   }))
 
   on('ui.render', { component: 'CommandOutput', props: { command: PREVIEW } }, async ($, e) => {
@@ -429,7 +434,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         <Text dimColor>
-          icons setting: {setting} → using {current}
+          {ICONS_ENV}: {setting} → using {current}
         </Text>
         {PROFILES.map(p => (
           <Box key={p.name} flexDirection="column" marginTop={1}>

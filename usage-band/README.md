@@ -29,19 +29,11 @@ A single centered row drawn as SVG: limit bars with the figure and reset time be
 /plugin install usage-band@cc-usage-band
 ```
 
-Or for one session from a local checkout:
-
-```bash
-claude --plugin-dir /path/to/usage-band
-```
+Then open a new session (or run `/reload-plugins`). Nothing to configure. Best in [Ghostty](https://ghostty.org), which ships the icon font.
 
 ## Settings
 
-| Option  | Values                              | Default | What it does |
-| ------- | ----------------------------------- | ------- | ------------ |
-| `icons` | `auto`, `nerd`, `unicode`, `ascii`  | `auto`  | Terminal icon set. `auto` uses Nerd Font icons in Ghostty (it ships them) and plain Unicode elsewhere. Pick `nerd` if your terminal font is a Nerd Font, `ascii` for the most basic terminals. |
-
-Change it from the config menu (`/config` in a terminal session).
+Terminal icons are picked automatically: Nerd Font icons in Ghostty, plain Unicode elsewhere. To override, set `USAGE_BAND_ICONS` in your shell profile to `auto`, `nerd`, `unicode` or `ascii`, e.g. `export USAGE_BAND_ICONS=unicode`.
 
 Run `/usage-band-preview` to see the band in every terminal style side by side, including how a 256-color terminal shows the colors.
 
@@ -56,7 +48,7 @@ Run `/usage-band-preview` to see the band in every terminal style side by side, 
 Mods run with the same access as Claude Code itself; they are not sandboxed. This one only:
 
 - reads the session's usage figures (`$.session.usage`, `session.measure`, `turn.complete`)
-- reads the `TERM_PROGRAM` environment variable to pick terminal icons
+- reads the `TERM_PROGRAM` and `USAGE_BAND_ICONS` environment variables to pick terminal icons
 - registers the `/usage-band-preview` command and draws the band
 
 It reads no files, runs no processes and makes no network requests.

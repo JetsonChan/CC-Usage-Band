@@ -1,13 +1,17 @@
 {
   "name": "cc-usage-band",
-  "owner": { "name": "Jetson Chan" },
-  "metadata": { "description": "usage-band, a Claude Code mod by Jetson Chan" },
+  "owner": {
+    "name": "Jetson Chan"
+  },
+  "metadata": {
+    "description": "usage-band, a Claude Code mod by Jetson Chan"
+  },
   "plugins": [
     {
       "name": "usage-band",
       "source": "./usage-band",
       "description": "5h/7d limits, context window and cache hit rate above the prompt, for the terminal and the desktop app",
-      "version": "1.0.1"
+      "version": "1.0.2"
     }
   ]
 }

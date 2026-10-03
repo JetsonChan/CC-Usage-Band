@@ -50,17 +50,21 @@ English · [简体中文](./README.zh-CN.md)
 
 - Claude Code **2.1.287 or newer** (the release that introduced mods), in the terminal or the desktop app's Code tab
 - A Claude subscription for the 5h and 7d figures. Without one, the band shows the context window and cache hit rate only.
+- **Recommended terminal: [Ghostty](https://ghostty.org).** It ships the icon font the band uses, so you get the full look with no setup. Other terminals work too, with simpler icons.
 
 ## Installation
 
-Run these inside Claude Code:
+Run these two commands inside Claude Code:
 
 ```
 /plugin marketplace add JetsonChan/CC-Usage-Band
 /plugin install usage-band@cc-usage-band
 ```
 
-Start a new session and the band appears above the prompt. The limit figures arrive with the session's first response.
+Then **open a new session**. The band appears above the prompt. That's it, nothing to configure.
+
+- Want it in the current session right away? Run `/reload-plugins`.
+- The 5h and 7d figures show up after Claude's first reply in the session.
 
 To try it for one session from a local checkout instead:
 
@@ -83,11 +87,13 @@ claude --plugin-dir CC-Usage-Band/usage-band
 
 ## Configuration
 
-| Option | Values | Default | Description |
-| --- | --- | --- | --- |
-| `icons` | `auto` · `nerd` · `unicode` · `ascii` | `auto` | Terminal icon set. `auto` uses Nerd Font icons in Ghostty, which ships them, and plain Unicode elsewhere. Choose `nerd` if your terminal font is a Nerd Font, `ascii` for the most basic terminals. The desktop app draws its own icons and ignores this. |
+Nothing to set up. The band picks its terminal icons by itself: Nerd Font icons in Ghostty, plain Unicode elsewhere. The desktop app draws its own icons.
 
-Change it with `/plugin` (configure `usage-band`) or `/config` in a terminal session.
+If your terminal shows boxes instead of icons, or you use a Nerd Font in another terminal, set `USAGE_BAND_ICONS` in your shell profile (e.g. `~/.zshrc`) and start a new session:
+
+```bash
+export USAGE_BAND_ICONS=unicode   # auto (default) · nerd · unicode · ascii
+```
 
 ## What the numbers mean
 
@@ -106,13 +112,13 @@ Change it with `/plugin` (configure `usage-band`) or `/config` in a terminal ses
 | macOS Terminal | Unicode | 256 colors, mapped automatically |
 | Anything else | Unicode | Whatever the terminal reports |
 
-If icons show as boxes, set `icons` to `unicode`. Run `/usage-band-preview` to compare every style in your own terminal.
+If icons show as boxes, set `USAGE_BAND_ICONS=unicode` (see [Configuration](#configuration)). Run `/usage-band-preview` to compare every style in your own terminal.
 
 ## Privacy and permissions
 
 Mods run with the same access as Claude Code itself and are not sandboxed, so here is everything this one touches:
 
-- **Reads** the session's usage figures (`session.measure`, `turn.complete`, `$.session.usage`) and the `TERM_PROGRAM` environment variable
+- **Reads** the session's usage figures (`session.measure`, `turn.complete`, `$.session.usage`) and the `TERM_PROGRAM` and `USAGE_BAND_ICONS` environment variables
 - **Registers** one command, `/usage-band-preview`
 - **Draws** the band above the prompt
 
@@ -124,7 +130,7 @@ It does not read or write files, run processes, call the network or send any dat
 .
 ├── .claude-plugin/marketplace.json   # the cc-usage-band marketplace
 └── usage-band/
-    ├── .claude-plugin/plugin.json    # manifest and the icons option
+    ├── .claude-plugin/plugin.json    # manifest
     ├── hooks/register.tsx            # the mod
     ├── types/index.d.ts              # state contract
     └── tests/band.test.ts
