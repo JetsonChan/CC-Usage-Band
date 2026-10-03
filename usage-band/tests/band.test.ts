@@ -167,3 +167,9 @@ test('the terminal bar animates once the band is drawn', async ($, on) => {
   expect(await firstCell()).not.toBe(before)
   await ui.unmount()
 })
+
+test('the desktop SVG declares both color schemes so a dark app gets no white backdrop', async () => {
+  const { svg } = desktopSvg({ context: { tokens: 1, window: 10, percent: 10 }, rateLimits: [] }, null, 0)
+  expect(svg).toContain('color-scheme:light dark')
+  expect(svg).toContain('prefers-color-scheme:dark')
+})

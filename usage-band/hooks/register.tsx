@@ -281,8 +281,12 @@ const ctxGroup = (hue: string, tokens: number, window: number, pct: number): Gro
   }
 }
 
+// The interactive SVG renders in its own frame; a frame whose color scheme differs from the app's
+// gets an opaque canvas behind it (white in a dark app). Declaring both schemes lets it follow the
+// app and stay transparent.
 const SVG_HEAD =
   `<style>` +
+  `:root{color-scheme:light dark;background:transparent}` +
   `text{font-family:Inter,"SF Pro Text",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:500;font-feature-settings:"tnum","cv05"}` +
   `.track{fill:var(--h);fill-opacity:.22}` +
   `.ink{fill:var(--l)}.mute{fill:#8b8f97;font-weight:400}.rule{fill:#000;fill-opacity:.1}.sep{fill:#000;fill-opacity:.2}` +
@@ -292,7 +296,7 @@ const SVG_HEAD =
   `<stop offset=".5" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`
 
 const wrap = (width: number, body: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${D.h}" viewBox="0 0 ${width} ${D.h}">${SVG_HEAD}${body}</svg>`
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${D.h}" viewBox="0 0 ${width} ${D.h}" style="color-scheme:light dark;background:transparent">${SVG_HEAD}${body}</svg>`
 
 export type Part = { svg: string; width: number; alt: string }
 

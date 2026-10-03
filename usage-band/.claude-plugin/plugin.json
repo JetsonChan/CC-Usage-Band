@@ -1,6 +1,6 @@
 {
   "name": "usage-band",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A band above the prompt showing your 5-hour and 7-day limits, context window and prompt-cache hit rate, styled for the terminal and the desktop app",
   "author": {
     "name": "Jetson Chan"
