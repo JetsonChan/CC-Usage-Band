@@ -364,9 +364,28 @@ export const describe = (m: Measure | null, t: TurnTokens | null) => {
   return parts.join(', ')
 }
 
+// The desktop app redraws the band, and its frame blinks, on every write a drawing reads. So a
+// reading is only written when it changes what the band shows: a new token count that rounds to
+// the same figure, or a clock tick that leaves every countdown as it was, writes nothing.
+const shown = (m: Measure | null, t: TurnTokens | null, at: number) => desktopSvg(m, t, at).full
+
 const tick = async ($: EngineInterface) => {
-  const t = await $.clock.now()
-  await update($, now, () => t)
+  const at = await $.clock.now()
+  const [m, t, was] = [await read($, measure), await read($, turn), await read($, now)]
+  if (was && shown(m, t, was) === shown(m, t, at)) return
+  await update($, now, () => at)
+}
+
+const setMeasure = async ($: EngineInterface, next: Measure) => {
+  const [m, t, at] = [await read($, measure), await read($, turn), await read($, now)]
+  if (m && shown(m, t, at) === shown(next, t, at)) return
+  await update($, measure, () => next)
+}
+
+const setTurn = async ($: EngineInterface, next: TurnTokens) => {
+  const [m, t, at] = [await read($, measure), await read($, turn), await read($, now)]
+  if (t && shown(m, t, at) === shown(m, next, at)) return
+  await update($, turn, () => next)
 }
 
 // Shown by the preview when the session has no reading yet
@@ -415,7 +434,7 @@ export const register: Register = on => {
       $.ui.toast(WELCOME, { timeoutMs: 12_000 })
     }
     const usage = await $.session.usage()
-    await update($, measure, () => ({ context: usage.context, rateLimits: usage.rateLimits }))
+    await setMeasure($, { context: usage.context, rateLimits: usage.rateLimits })
     await tick($)
     $.clock.every(60_000, () => {
       void tick($)
@@ -428,7 +447,7 @@ export const register: Register = on => {
       context: { tokens: e.context.tokens, window: e.context.window, percent: e.context.percent },
       rateLimits: e.rateLimits.map(({ kind, percentUsed, resetsAt }) => ({ kind, percentUsed, resetsAt })),
     }
-    await update($, measure, () => m)
+    await setMeasure($, m)
     await tick($)
     return next(e)
   })
@@ -437,12 +456,12 @@ export const register: Register = on => {
     // Main loop only; subagent runs raise their own turn.complete
     if (e.agentId === undefined && e.usage) {
       const u = e.usage
-      await update($, turn, () => ({
+      await setTurn($, {
         input: u.input_tokens,
         output: u.output_tokens,
         cacheRead: u.cache_read_input_tokens,
         cacheWrite: u.cache_creation_input_tokens,
-      }))
+      })
     }
     return next(e)
   })
