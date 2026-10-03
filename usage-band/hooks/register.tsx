@@ -150,10 +150,9 @@ const fit = (m: Measure | null, t: TurnTokens | null, at: number, cols: number, 
   layout(m, t, at, 0, frame, look)
 
 
-// ---- Desktop: the band is two SVGs on the same grid, one laid over the other.
-// An animated SVG has to run in a frame, and a frame reloads (the band blinks) whenever its source
-// changes. So the figures, which change every minute, are a plain image, and only the moving parts
-// (bars and dots with their shine) are in the frame, whose source changes only when they do.
+// ---- Desktop: the band is one SVG drawn as a plain image. The SMIL shine runs in an image too,
+// and an image redraws in place, where an interactive (framed) SVG reloads its frame and blinks
+// the whole band on every redraw.
 
 const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -178,7 +177,7 @@ const ink = (hue: string, x: number, y: number, v: string, size: number) =>
 const mute = (x: number, y: number, v: string, size: number) =>
   `<text x="${x}" y="${y}" font-size="${size}" ${pinW(v, size)} class="mute">${esc(v)}</text>`
 
-// stat: the image layer (type, icons, rules); motion: the framed layer (bars, dots, shine)
+// stat: type, icons and rules; motion: bars and dots with their shine
 type Layers = { stat: string; motion: string }
 type Group = { width: number; draw: (x: number) => Layers }
 
@@ -288,7 +287,7 @@ const ctxGroup = (hue: string, tokens: number, window: number, pct: number): Gro
   }
 }
 
-// Both layers carry the same head. The framed one needs it most: a frame whose color scheme differs from the app's
+// An image takes its color scheme from the app; a frame (should the band ever be framed) whose color scheme differs from the app's
 // gets an opaque canvas behind it (white in a dark app). Declaring both schemes lets it follow the
 // app and stay transparent.
 const SVG_HEAD =
@@ -328,28 +327,18 @@ export const desktopParts = (m: Measure | null, t: TurnTokens | null, at: number
   })
 }
 
-// Groups sit D.gap apart with a hairline centred in each gap; the one inside a limit group is
-// shorter and fainter. All the moving parts share one frame, so every shine runs on one clock.
-// `svg` is the image layer and `motion` the framed one, absent when nothing moves.
+// One SVG for the whole band, so every shine runs on the same clock. Groups sit D.gap apart
+// with a hairline centred in each gap; the one inside a limit group is shorter and fainter.
 export const desktopSvg = (m: Measure | null, t: TurnTokens | null, at: number) => {
   let x = 0
-  const stat: string[] = []
-  const motion: string[] = []
+  const body: string[] = []
   desktopParts(m, t, at).forEach((p, i) => {
-    if (i > 0) stat.push(`<rect x="${Math.round(x - D.gap / 2)}" y="7" width="1" height="16" class="sep"/>`)
-    stat.push(`<g transform="translate(${x} 0)">${p.stat}</g>`)
-    if (p.motion) motion.push(`<g transform="translate(${x} 0)">${p.motion}</g>`)
+    if (i > 0) body.push(`<rect x="${Math.round(x - D.gap / 2)}" y="7" width="1" height="16" class="sep"/>`)
+    body.push(`<g transform="translate(${x} 0)">${p.stat}${p.motion}</g>`)
     x += p.width + D.gap
   })
   const width = Math.max(1, Math.ceil(x - D.gap))
-  return {
-    svg: wrap(width, stat.join('')),
-    motion: motion.length ? wrap(width, motion.join('')) : undefined,
-    // Both layers in one framed SVG: what the band draws until the split layers can be laid out
-    full: wrap(width, stat.join('') + motion.join('')),
-    width,
-    height: D.h,
-  }
+  return { svg: wrap(width, body.join('')), width, height: D.h }
 }
 
 export const describe = (m: Measure | null, t: TurnTokens | null) => {
@@ -367,7 +356,7 @@ export const describe = (m: Measure | null, t: TurnTokens | null) => {
 // The desktop app redraws the band, and its frame blinks, on every write a drawing reads. So a
 // reading is only written when it changes what the band shows: a new token count that rounds to
 // the same figure, or a clock tick that leaves every countdown as it was, writes nothing.
-const shown = (m: Measure | null, t: TurnTokens | null, at: number) => desktopSvg(m, t, at).full
+const shown = (m: Measure | null, t: TurnTokens | null, at: number) => desktopSvg(m, t, at).svg
 
 const tick = async ($: EngineInterface) => {
   const at = await $.clock.now()
@@ -506,10 +495,10 @@ export const register: Register = on => {
     // Desktop and mobile animate inside the SVG, so they never read the frame counter
     if (e.surface === 'desktop' || e.surface === 'mobile') {
       const { Box, Svg } = $.ui.resolve(e)
-      const { full, width, height } = desktopSvg(m, t, at)
+      const { svg, width, height } = desktopSvg(m, t, at)
       return (
         <Box flexDirection="row" justifyContent="center" flexGrow={1} paddingX={1}>
-          <Svg source={full} alt={describe(m, t)} width={width} height={height} isInteractive />
+          <Svg source={svg} alt={describe(m, t)} width={width} height={height} />
         </Box>
       )
     }
