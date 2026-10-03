@@ -25,8 +25,8 @@ A single centered row drawn as SVG: limit bars with the figure and reset time be
 ## Install
 
 ```
-/plugin marketplace add HoyinCC470/claude-code-mods
-/plugin install usage-band@hoyin-mods
+/plugin marketplace add JetsonChan/CC-Usage-Band
+/plugin install usage-band@cc-usage-band
 ```
 
 Or for one session from a local checkout:

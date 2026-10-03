@@ -1,7 +1,7 @@
 {
-  "name": "hoyin-mods",
-  "owner": { "name": "HoyinChanCC" },
-  "metadata": { "description": "HoyinChanCC's Claude Code mods" },
+  "name": "cc-usage-band",
+  "owner": { "name": "Jetson Chan" },
+  "metadata": { "description": "usage-band, a Claude Code mod by Jetson Chan" },
   "plugins": [
     {
       "name": "usage-band",

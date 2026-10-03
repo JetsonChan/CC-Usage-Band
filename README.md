@@ -1,4 +1,4 @@
-# claude-code-mods
+# CC-Usage-Band
 
 Mods for [Claude Code](https://claude.com/claude-code): small TypeScript plugins that change how it looks and behaves, in the terminal and the desktop app.
 
@@ -11,8 +11,8 @@ Mods for [Claude Code](https://claude.com/claude-code): small TypeScript plugins
 Add this repository as a marketplace, then install a mod from it:
 
 ```
-/plugin marketplace add HoyinCC470/claude-code-mods
-/plugin install usage-band@hoyin-mods
+/plugin marketplace add JetsonChan/CC-Usage-Band
+/plugin install usage-band@cc-usage-band
 ```
 
 Mods run with the same access as Claude Code itself and are not sandboxed. Each mod's README says what it reads and calls.
